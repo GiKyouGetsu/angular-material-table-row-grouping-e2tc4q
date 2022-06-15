@@ -1,4 +1,4 @@
-import { Component, OnInit, } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MatTableDataSource } from '@angular/material';
 
 import { CarTableDataService } from './car-table-data.service';
@@ -16,7 +16,7 @@ export class Group {
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit {
   title = 'Grid Grouping';
@@ -26,39 +26,67 @@ export class AppComponent implements OnInit {
   _alldata: any[];
   columns: any[];
   displayedColumns: string[];
-  groupByColumns: string[] = [];
+  groupByColumns: any[] = [];
 
-  constructor(
-    protected dataSourceService: CarTableDataService,
-  ) {
-
-    this.columns = [{
-      field: 'id'
-    }, {
-      field: 'vin'
-    }, {
-      field: 'brand'
-    }, {
-      field: 'year'
-    }, {
-      field: 'color'
-    }];
-    this.displayedColumns = this.columns.map(column => column.field);
-    this.groupByColumns = ['brand'];
+  constructor(protected dataSourceService: CarTableDataService) {
+    this.columns = [
+      {
+        field: 0,
+      },
+      {
+        field: 1,
+      },
+      {
+        field: 2,
+      },
+      {
+        field: 3,
+      },
+      {
+        field: 4,
+      },
+      {
+        field: 5,
+      },
+      {
+        field: 6,
+      },
+      {
+        field: 7,
+      },
+      {
+        field: 8,
+      },
+      {
+        field: 9,
+      },
+      {
+        field: 10,
+      },
+    ];
+    this.displayedColumns = this.columns.map((column) => {
+      console.log('column is ', column);
+      return column.field + '';
+    });
+    // this.groupByColumns = [0];
   }
 
   ngOnInit() {
-    this.dataSourceService.getAllData()
-    .subscribe(
+    this.dataSourceService.getAllData().subscribe(
       (data: any) => {
-          data.data.forEach((item, index) => {
-            item.id = index + 1;
-          });
-          this._alldata = data.data;
-          this.dataSource.data = this.addGroups(this._alldata, this.groupByColumns);
-          this.dataSource.filterPredicate = this.customFilterPredicate.bind(this);
-          this.dataSource.filter = performance.now().toString();
-        },
+        data.data.forEach((item, index) => {
+          item.id = index + 1;
+        });
+        this._alldata = data.data;
+        this.dataSource.data = this._alldata;
+        // console.log('this . datasource.data is', this._alldata);
+        this.dataSource.data = this.addGroups(
+          this._alldata,
+          this.groupByColumns
+        );
+        this.dataSource.filterPredicate = this.customFilterPredicate.bind(this);
+        this.dataSource.filter = performance.now().toString();
+      },
       (err: any) => console.log(err)
     );
   }
@@ -70,9 +98,11 @@ export class AppComponent implements OnInit {
     this.dataSource.filter = performance.now().toString();
   }
 
-  checkGroupByColumn(field, add ) {
+  checkGroupByColumn(field, add) {
     let found = null;
     for (const column of this.groupByColumns) {
+      console.log("column is ", column)
+      console.log("field is ", field)
       if (column === field) {
         found = this.groupByColumns.indexOf(column, 0);
       }
@@ -82,7 +112,7 @@ export class AppComponent implements OnInit {
         this.groupByColumns.splice(found, 1);
       }
     } else {
-      if ( add ) {
+      if (add) {
         this.groupByColumns.push(field);
       }
     }
@@ -97,24 +127,22 @@ export class AppComponent implements OnInit {
 
   // below is for grid row grouping
   customFilterPredicate(data: any | Group, filter: string): boolean {
-    return (data instanceof Group) ? data.visible : this.getDataRowVisible(data);
+    return data instanceof Group ? data.visible : this.getDataRowVisible(data);
   }
 
   getDataRowVisible(data: any): boolean {
-    const groupRows = this.dataSource.data.filter(
-      row => {
-        if (!(row instanceof Group)) {
-          return false;
-        }
-        let match = true;
-        this.groupByColumns.forEach(column => {
-          if (!row[column] || !data[column] || row[column] !== data[column]) {
-            match = false;
-          }
-        });
-        return match;
+    const groupRows = this.dataSource.data.filter((row) => {
+      if (!(row instanceof Group)) {
+        return false;
       }
-    );
+      let match = true;
+      this.groupByColumns.forEach((column) => {
+        if (!row[column] || !data[column] || row[column] !== data[column]) {
+          match = false;
+        }
+      });
+      return match;
+    });
 
     if (groupRows.length === 0) {
       return true;
@@ -125,7 +153,7 @@ export class AppComponent implements OnInit {
 
   groupHeaderClick(row) {
     row.expanded = !row.expanded;
-    this.dataSource.filter = performance.now().toString();  // bug here need to fix
+    this.dataSource.filter = performance.now().toString(); // bug here need to fix
   }
 
   addGroups(data: any[], groupByColumns: string[]): any[] {
@@ -134,35 +162,46 @@ export class AppComponent implements OnInit {
     return this.getSublevel(data, 0, groupByColumns, rootGroup);
   }
 
-  getSublevel(data: any[], level: number, groupByColumns: string[], parent: Group): any[] {
+  getSublevel(
+    data: any[],
+    level: number,
+    groupByColumns: string[],
+    parent: Group
+  ): any[] {
     if (level >= groupByColumns.length) {
       return data;
     }
     const groups = this.uniqueBy(
-      data.map(
-        row => {
-          const result = new Group();
-          result.level = level + 1;
-          result.parent = parent;
-          for (let i = 0; i <= level; i++) {
-            result[groupByColumns[i]] = row[groupByColumns[i]];
-          }
-          return result;
+      data.map((row) => {
+        const result = new Group();
+        result.level = level + 1;
+        result.parent = parent;
+        for (let i = 0; i <= level; i++) {
+          result[groupByColumns[i]] = row[groupByColumns[i]];
         }
-      ),
-      JSON.stringify);
+        return result;
+      }),
+      JSON.stringify
+    );
 
     const currentColumn = groupByColumns[level];
     let subGroups = [];
-    groups.forEach(group => {
-      const rowsInGroup = data.filter(row => group[currentColumn] === row[currentColumn]);
+    groups.forEach((group) => {
+      const rowsInGroup = data.filter(
+        (row) => group[currentColumn] === row[currentColumn]
+      );
       group.totalCounts = rowsInGroup.length;
-      const subGroup = this.getSublevel(rowsInGroup, level + 1, groupByColumns, group);
+      const subGroup = this.getSublevel(
+        rowsInGroup,
+        level + 1,
+        groupByColumns,
+        group
+      );
       subGroup.unshift(group);
       subGroups = subGroups.concat(subGroup);
     });
 
-    console.log("subgroupes is",subGroups)
+    console.log('subgroupes is', subGroups);
     return subGroups;
   }
 
